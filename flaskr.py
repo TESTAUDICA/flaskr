@@ -21,6 +21,8 @@ app.config.update(dict(
     PASSWORD='default'
 ))
 
+app.config.from_envvar('FLASKR_SETTINGS', silent=True)
+
 
 def connect_db():
     """Connects to the specific database."""
@@ -55,7 +57,8 @@ def init_db():
 
 @app.route('/')
 def show_entries():
-    cur = g.db.execute('select title, text from entries order by id desc')
+    g.sqlite_db = get_db()
+    cur = g.sqlite_db.execute('SELECT title, text FROM entries ORDER BY id DESC')
     entries = [dict(title=row[0], text=row[1]) for row in cur.fetchall()]
     return render_template('show_entries.html', entries=entries)
 
@@ -64,7 +67,7 @@ def show_entries():
 def add_entry():
     if not session.get('logged_in'):
         abort(401)
-    g.db.execute('insert into entries (title, text) values (?, ?)',
+    g.db.execute('INSERT INTO entries (title, text) VALUES (?, ?)',
                  [request.form['title'], request.form['text']])
     g.db.commit()
     flash('New entry was successfully posted')
